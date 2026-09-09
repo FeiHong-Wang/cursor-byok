@@ -1,8 +1,6 @@
 //! Handles standard Anthropic Messages protocol endpoints for Claude Code CLI and Desktop.
-use std::time::Instant;
-
 use axum::{
-    body::{to_bytes, Body, Bytes},
+    body::{to_bytes, Body},
     extract::State,
     http::{HeaderMap, Request, Response},
     routing::{get, post},
@@ -58,7 +56,7 @@ async fn handle_models(
         .map(|m| ModelListItem {
             id: m.model_id.clone(),
             object: "model",
-            created: m.created_at_ms / 1000,
+            created: (m.created_at_ms / 1000).max(0) as u64,
             owned_by: "cursor-byok",
             display_name: m.display_name,
         })
@@ -94,7 +92,7 @@ async fn handle_messages(
         .find(|m| m.model_id == requested_model || m.model_hash == requested_model)
         .or_else(|| models.first());
 
-    let (upstream_url, api_key, custom_headers, model_hash, display_name, provider_type) =
+    let (upstream_url, api_key, custom_headers_val, model_hash, display_name, provider_type) =
         if let Some(cfg) = target_model {
             let url = cfg.request_url()?;
             (
@@ -114,7 +112,7 @@ async fn handle_messages(
             (
                 "https://api.anthropic.com/v1/messages".to_string(),
                 client_key,
-                std::collections::BTreeMap::new(),
+                serde_json::json!({}),
                 requested_model.to_string(),
                 requested_model.to_string(),
                 ProviderType::Anthropic,
@@ -185,8 +183,12 @@ async fn handle_messages(
     if !api_key.is_empty() {
         upstream_req = upstream_req.header("x-api-key", api_key);
     }
-    for (k, v) in custom_headers {
-        upstream_req = upstream_req.header(k, v);
+    if let Some(map) = custom_headers_val.as_object() {
+        for (k, v) in map {
+            if let Some(val_str) = v.as_str() {
+                upstream_req = upstream_req.header(k, val_str);
+            }
+        }
     }
 
     let upstream_resp = match upstream_req.body(body_bytes).send().await {
@@ -230,7 +232,6 @@ async fn handle_messages(
                     if let Some(ref rec) = stream_recorder {
                         let _ = rec.response_chunk(&chunk).await;
                     }
-                    // 简单的 SSE 块正则/JSON 嗅探 token usage
                     if let Ok(text) = std::str::from_utf8(&chunk) {
                         for line in text.lines() {
                             if line.starts_with("data: ") {
