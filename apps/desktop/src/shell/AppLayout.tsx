@@ -14,7 +14,7 @@ import { ConfirmDialog } from "../shared/ui/ConfirmDialog";
 import controls from "../shared/ui/Controls.module.scss";
 import { Icon } from "../shared/ui/Icon";
 import { TooltipTrigger } from "../shared/ui/TooltipTrigger";
-import { flatColorAboutIcon, flatColorAreaChartIcon, flatColorCrystalOscillatorIcon, flatColorSalesPerformanceIcon, flatColorSettingsIcon, refreshIcon } from "../shared/ui/icons";
+import { claudeIcon, flatColorAboutIcon, flatColorAreaChartIcon, flatColorCrystalOscillatorIcon, flatColorSalesPerformanceIcon, flatColorSettingsIcon, refreshIcon } from "../shared/ui/icons";
 import { useMessage } from "../shared/ui/message";
 import { VirtualList } from "../shared/virtual/VirtualList";
 import { useI18n } from "../i18n/store";
@@ -28,7 +28,7 @@ type MenuItem =
   | { kind: "external"; id: string; label: string; icon: IconifyIcon | string }
   | { kind: "group"; label: string };
 
-const keptAlivePages = ["/", "/calls", "/settings", "/harness/cursor", "/plugins"];
+const keptAlivePages = ["/", "/calls", "/settings", "/harness/cursor", "/harness/claude", "/plugins"];
 const readAdStorageKey = "cursor-byok:read-ad-ids";
 const dismissedAdStorageKey = "cursor-byok:dismissed-ad-ids";
 const tutorialReadStorageKey = "cursor-byok:tutorial-read";
@@ -75,6 +75,7 @@ export function AppLayout() {
     { kind: "page", path: "/calls", label: t("调用详细"), icon: flatColorSalesPerformanceIcon },
     { kind: "group", label: t("模型配置") },
     { kind: "page", path: "/harness/cursor", label: "Cursor", icon: cursorIconUrl },
+    { kind: "page", path: "/harness/claude", label: "Claude", icon: claudeIcon },
     { kind: "group", label: t("设置") },
     { kind: "page", path: "/plugins", label: t("插件配置"), icon: flatColorCrystalOscillatorIcon },
     { kind: "page", path: "/settings", label: t("系统设置"), icon: flatColorSettingsIcon },
@@ -222,6 +223,12 @@ export function AppLayout() {
                 data-taken={cursorHarness.settings_applied || undefined}
               >
                 {cursorHarness.settings_applied ? t("已接管") : t("未接管")}
+              </span>}
+              {item.path === "/harness/claude" && <span
+                className={styles.menuStatusTag}
+                data-taken="true"
+              >
+                {t("已就绪")}
               </span>}
               {item.path === "/settings" && availableVersion && <span className={styles.menuIndicatorDot} aria-hidden="true" />}
             </NavLink>

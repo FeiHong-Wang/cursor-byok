@@ -69,7 +69,7 @@ impl App {
             config.app_version.clone(),
         )?;
         let harness = control.cursor_harness().clone();
-        let mut router = api::router(registry.clone(), clients)?;
+        let mut router = api::router(registry.clone(), store.clone(), clients)?;
         router = match &config.console {
             Some(ConsoleSource::Directory(directory)) => {
                 router.merge(control::web_router(control.clone(), directory))
