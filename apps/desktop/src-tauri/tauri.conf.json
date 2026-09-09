@@ -21,7 +21,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "createUpdaterArtifacts": true,
+    "createUpdaterArtifacts": false,
     "icon": [
       "icons/linux-32x32.png",
       "icons/linux-128x128.png",
