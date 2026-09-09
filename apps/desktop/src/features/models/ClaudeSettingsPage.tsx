@@ -261,7 +261,7 @@ export function ClaudeSettingsPage() {
               type="button"
               className={controls.button}
               onClick={copyEndpoint}
-              title={t("点击复制 Base URL")}
+              title="Copy Base URL"
             >
               {copiedBaseUrl ? <Icon icon={checkIcon} size="1.2em" /> : null}
               <span>{claudeBaseUrl}</span>
