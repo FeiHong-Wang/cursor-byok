@@ -1,6 +1,7 @@
 //! Exposes the local control API.
 mod ads;
 mod calls;
+pub mod claude_harness;
 mod harness;
 mod models;
 mod overview;
@@ -228,8 +229,34 @@ pub fn api_router(service: ControlService) -> Router {
             "/__byok-api__/api/harness/cursor/enabled",
             put(harness::set_enabled),
         )
+        .route(
+            "/__byok-api__/api/harness/claude/status",
+            get(claude_harness_status),
+        )
+        .route(
+            "/__byok-api__/api/harness/claude/enabled",
+            put(claude_harness_set_enabled),
+        )
         .with_state(service)
         .layer(desktop_cors())
+}
+
+async fn claude_harness_status(State(service): State<ControlService>) -> Result<axum::Json<claude_harness::ClaudeDesktopStatus>> {
+    let port = service.store().port_settings().await?.service_port;
+    Ok(axum::Json(claude_harness::get_status(port).await?))
+}
+
+#[derive(serde::Deserialize)]
+struct SetClaudeEnabled {
+    enabled: bool,
+}
+
+async fn claude_harness_set_enabled(
+    State(service): State<ControlService>,
+    axum::Json(input): axum::Json<SetClaudeEnabled>,
+) -> Result<axum::Json<claude_harness::ClaudeDesktopStatus>> {
+    let port = service.store().port_settings().await?.service_port;
+    Ok(axum::Json(claude_harness::set_enabled(&service.store(), port, input.enabled).await?))
 }
 
 fn desktop_cors() -> CorsLayer {

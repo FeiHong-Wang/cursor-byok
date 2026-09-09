@@ -10,6 +10,7 @@ import { FormField, SecretTextInput, TextInput } from "../../shared/ui/FormContr
 import controls from "../../shared/ui/Controls.module.scss";
 import { Icon } from "../../shared/ui/Icon";
 import { Modal } from "../../shared/ui/Modal";
+import { Switch } from "../../shared/ui/Switch";
 import { TooltipTrigger } from "../../shared/ui/TooltipTrigger";
 import { addIcon, checkIcon } from "../../shared/ui/icons";
 import { useMessage } from "../../shared/ui/message";
@@ -77,7 +78,25 @@ export function ClaudeSettingsPage() {
   const [groupBaseUrlDraft, setGroupBaseUrlDraft] = useState("");
   const [groupApiKeyDraft, setGroupApiKeyDraft] = useState("");
   const [groupSettingsBusy, setGroupSettingsBusy] = useState(false);
-  const [copiedBaseUrl, setCopiedBaseUrl] = useState(false);
+  const [claudeTakenOver, setClaudeTakenOver] = useState(false);
+  const [takeoverBusy, setTakeoverBusy] = useState(false);
+
+  useEffect(() => {
+    void api.claudeHarness().then((st) => setClaudeTakenOver(st.enabled)).catch(() => {});
+  }, []);
+
+  const toggleTakeover = useCallback(async (enabled: boolean) => {
+    setTakeoverBusy(true);
+    try {
+      const res = await api.setClaudeEnabled(enabled);
+      setClaudeTakenOver(res.enabled);
+      message(enabled ? "已开启接管 Claude Desktop (配置已自动写入)" : "已关闭接管 Claude Desktop");
+    } catch (err) {
+      message(errorText(err));
+    } finally {
+      setTakeoverBusy(false);
+    }
+  }, [message]);
   const activeModelTests = useRef(new Map<string, { testId: string; controller: AbortController; cancelling: boolean }>());
 
   const servicePort = ports?.service_port || 8080;
@@ -297,7 +316,15 @@ export function ClaudeSettingsPage() {
     <>
       <PageActions position="left">
         <div className={styles.takeoverActions}>
-          <span className={styles.takeoverStatus}>{t("已接管")}</span>
+          <span className={styles.takeoverStatus}>{claudeTakenOver ? t("已接管") : t("未接管")}</span>
+          <TooltipTrigger label={claudeTakenOver ? "关闭接管 Claude Desktop" : "开启接管 Claude Desktop (自动写入 3P 配置)"}>
+            <Switch
+              checked={claudeTakenOver}
+              disabled={takeoverBusy}
+              label={claudeTakenOver ? "已接管" : "未接管"}
+              onChange={toggleTakeover}
+            />
+          </TooltipTrigger>
           {testTargets.length > 0 && (
             <div className={styles.groupActions} role="group" aria-label={t("操作")}>
               <button type="button" aria-pressed={grouping === "flat"} onClick={() => setGrouping("flat")}>

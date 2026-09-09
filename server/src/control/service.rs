@@ -172,6 +172,10 @@ impl ControlService {
         &self.cursor_harness
     }
 
+    pub fn store(&self) -> &Store {
+        &self.store
+    }
+
     pub async fn plugins(&self) -> Vec<PluginDescriptor> {
         self.plugins.plugins().await
     }

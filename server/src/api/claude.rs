@@ -87,12 +87,17 @@ async fn handle_messages(
 
     // 匹配本地模型配置
     let models = ctx.store.models().await?;
-    let target_model = models
-        .iter()
-        .find(|m| m.model_id == requested_model || m.model_hash == requested_model)
-        .or_else(|| models.first());
+    let target_model = if requested_model.contains("opus") {
+        models.iter().find(|m| m.model_id.contains("opus")).or_else(|| models.first())
+    } else if requested_model.contains("sonnet") {
+        models.iter().find(|m| m.model_id.contains("sonnet")).or_else(|| models.first())
+    } else if requested_model.contains("haiku") {
+        models.iter().find(|m| m.model_id.contains("haiku")).or_else(|| models.first())
+    } else {
+        models.iter().find(|m| m.model_id == requested_model || m.model_hash == requested_model).or_else(|| models.first())
+    };
 
-    let (upstream_url, api_key, custom_headers_val, model_hash, display_name, provider_type) =
+    let (upstream_url, api_key, custom_headers_val, model_hash, display_name, provider_type, actual_model_id) =
         if let Some(cfg) = target_model {
             let url = cfg.request_url()?;
             (
@@ -102,6 +107,7 @@ async fn handle_messages(
                 cfg.model_hash.clone(),
                 cfg.display_name.clone(),
                 cfg.provider_type(),
+                cfg.model_id.clone(),
             )
         } else {
             let client_key = headers
@@ -116,8 +122,15 @@ async fn handle_messages(
                 requested_model.to_string(),
                 requested_model.to_string(),
                 ProviderType::Anthropic,
+                requested_model.to_string(),
             )
         };
+
+    // 核心模型映射改写: 将 Claude 客户端发来的 claude-opus-* 等固定角色名替换为你中转站真实的 model_id
+    let mut rewritten_body = json_body.clone();
+    rewritten_body["model"] = serde_json::Value::String(actual_model_id);
+    let final_body_bytes = serde_json::to_vec(&rewritten_body)
+        .map_err(|e| Error::Protocol(format!("failed to serialize rewritten body: {e}")))?;
 
     let call_id = format!("claude-{}", uuid::Uuid::new_v4());
     let run_id = format!("run-{}", uuid::Uuid::new_v4());
@@ -191,7 +204,7 @@ async fn handle_messages(
         }
     }
 
-    let upstream_resp = match upstream_req.body(body_bytes).send().await {
+    let upstream_resp = match upstream_req.body(final_body_bytes).send().await {
         Ok(resp) => resp,
         Err(err) => {
             let error = Error::Http(err);
