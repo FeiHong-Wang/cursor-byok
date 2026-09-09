@@ -228,7 +228,7 @@ export function AppLayout() {
                 className={styles.menuStatusTag}
                 data-taken="true"
               >
-                {t("已就绪")}
+                {t("已接管")}
               </span>}
               {item.path === "/settings" && availableVersion && <span className={styles.menuIndicatorDot} aria-hidden="true" />}
             </NavLink>

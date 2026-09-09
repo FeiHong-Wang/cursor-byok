@@ -61,7 +61,7 @@ export function ClaudeSettingsPage() {
   const copyEndpoint = useCallback(() => {
     void navigator.clipboard.writeText(claudeBaseUrl).then(() => {
       setCopiedBaseUrl(true);
-      message(t("已复制 Claude 网关 Base URL 到剪贴板"));
+      message(claudeBaseUrl);
       setTimeout(() => setCopiedBaseUrl(false), 2000);
     });
   }, [claudeBaseUrl, message]);
@@ -287,7 +287,7 @@ export function ClaudeSettingsPage() {
       }
     >
       <div style={{ padding: "0 0 16px 0", color: "var(--color-text-secondary)", fontSize: "13px" }}>
-        {t("Claude Code Desktop 及终端通过标准 Anthropic 协议与本地服务通信。在 Desktop 设置或终端将 Base URL 指向上面地址即可使用下列配置的模型。")}
+        Claude Code Desktop / CLI Gateway (http://127.0.0.1:{servicePort})
       </div>
 
       <CursorModelCards
@@ -369,12 +369,14 @@ export function ClaudeSettingsPage() {
         <ConfirmDialog
           id="delete-model-dialog"
           open={Boolean(deleting)}
-          title={t("确认删除模型？")}
+          title={t("删除模型")}
           confirmLabel={t("删除")}
           cancelLabel={t("取消")}
           onConfirm={confirmDelete}
           onCancel={() => setDeleting(null)}
-        />
+        >
+          <p>{t("确定删除这个模型吗？")}</p>
+        </ConfirmDialog>
       )}
     </PageContent>
   );

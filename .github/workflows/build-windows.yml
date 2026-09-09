@@ -30,8 +30,10 @@ jobs:
         working-directory: apps/desktop
         run: npm ci
 
-      - name: Build frontend
+      - name: Scan i18n and Build frontend
         working-directory: apps/desktop
+        env:
+          STATIC_I18N_SCAN: "true"
         run: npm run build
 
       - name: Build Tauri Application
