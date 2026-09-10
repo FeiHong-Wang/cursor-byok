@@ -80,6 +80,7 @@ export function ClaudeSettingsPage() {
   const [groupSettingsBusy, setGroupSettingsBusy] = useState(false);
   const [claudeTakenOver, setClaudeTakenOver] = useState(false);
   const [takeoverBusy, setTakeoverBusy] = useState(false);
+  const [copiedBaseUrl, setCopiedBaseUrl] = useState(false);
 
   useEffect(() => {
     void api.claudeHarness().then((st) => setClaudeTakenOver(st.enabled)).catch(() => {});
