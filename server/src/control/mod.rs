@@ -22,6 +22,8 @@ use tower_http::{
 };
 use url::{Host, Url};
 
+use crate::Result;
+
 pub use service::{
     CallDetail, CallSummary, ControlService, DiscoveredModels, LegacyModelImportPreview,
     LegacyModelImportResult, ModelConnectivityResult, ModelDiscoveryInput, ObservabilitySettings,
